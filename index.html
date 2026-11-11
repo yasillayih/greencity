@@ -1,0 +1,598 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Green City</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky bar, hero with live city model (scene + toggles + metrics), then calculator, roadmap tabs, pledge list. */
+:root{
+  --bg:#EDF2EE; --surface:#F8FBF8; --fg:#10261D; --muted:#4A6156; --line:#C9D7CE; --tint:#DCEEE2;
+  --green:#1B7447; --green2:#58A96A; --leaf:#93CE74; --sun:#F0B03A; --oncol:#FFFFFF;
+  --sky:#CDE7EE; --smog:#B9A98B; --bld:#8DA297; --bld2:#A9BBB1; --win:#D8E6DE; --ground:#B4AFA0;
+  --road:#55645D; --panel:#2B4768; --water:#4AA3C8;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Manrope",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1511; --surface:#12221B; --fg:#E3EFE7; --muted:#9CB4A6; --line:#24392F; --tint:#173226;
+    --green:#55C58A; --green2:#3F9A62; --leaf:#4F8F3F; --sun:#E8B04A; --oncol:#07130D;
+    --sky:#14303A; --smog:#7A6B52; --bld:#2F4A42; --bld2:#243A33; --win:#5E8574; --ground:#2A2F28;
+    --road:#1B2622; --panel:#3C628F; --water:#3E93B8; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1511; --surface:#12221B; --fg:#E3EFE7; --muted:#9CB4A6; --line:#24392F; --tint:#173226;
+  --green:#55C58A; --green2:#3F9A62; --leaf:#4F8F3F; --sun:#E8B04A; --oncol:#07130D;
+  --sky:#14303A; --smog:#7A6B52; --bld:#2F4A42; --bld2:#243A33; --win:#5E8574; --ground:#2A2F28;
+  --road:#1B2622; --panel:#3C628F; --water:#3E93B8; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{background:var(--bg);color:var(--fg);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;letter-spacing:-.02em}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+a{color:var(--green)}
+:focus-visible{outline:3px solid var(--green);outline-offset:2px;border-radius:6px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:12px;min-height:58px}
+.brand{display:flex;align-items:center;gap:10px;font:700 19px var(--display);letter-spacing:-.02em;color:var(--fg);text-decoration:none;margin-right:auto}
+.brand svg{width:26px;height:26px}
+.top nav{display:flex;gap:22px;margin-right:10px}
+.top nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:14px}
+.top nav a:hover{color:var(--fg)}
+@media (max-width:700px){.top nav{display:none}}
+.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:600 13px var(--body);cursor:pointer}
+.ghost:hover{border-color:var(--green)}
+.btn{background:var(--green);color:var(--oncol);border:0;border-radius:10px;padding:13px 20px;font:700 15px var(--body);cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+
+/* hero */
+.hero{padding-block:44px 28px}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+h1{font-size:clamp(2.5rem,7.4vw,5.2rem);line-height:1.02;font-weight:760;max-width:17ch}
+h1 em{font-style:normal;color:var(--green)}
+.lede{max-width:58ch;margin-top:20px;font-size:1.08rem;color:var(--muted)}
+.cta{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-top:26px}
+.link{font-weight:700;text-decoration:none;border-bottom:2px solid var(--green2)}
+
+/* model */
+.model-sec{padding-block:8px 56px}
+.model{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){.model{grid-template-columns:minmax(0,1fr) 330px}}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.stage svg{display:block;width:100%;height:auto}
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;padding:14px}
+.chip{display:grid;grid-template-columns:auto 1fr auto;gap:1px 10px;align-items:center;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;color:var(--fg);font-family:var(--body);min-width:0}
+.chip:hover{border-color:var(--green2)}
+.chip .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--green);grid-row:1 / span 2}
+.chip .nm{font-weight:700;font-size:14px}
+.chip small{grid-column:2;color:var(--muted);font-size:12px;line-height:1.35}
+.chip .pts{font:500 12px var(--mono);color:var(--muted);grid-row:1 / span 2}
+.chip[aria-pressed="true"]{background:var(--tint);border-color:var(--green)}
+.chip[aria-pressed="true"] .dot{background:var(--green)}
+.chip[aria-pressed="true"] .pts{color:var(--green)}
+.stagefoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:center;padding:0 14px 14px}
+.stagefoot p{font-size:12.5px;color:var(--muted)}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.gauge{display:flex;align-items:center;gap:16px}
+.gauge svg{width:112px;height:112px;flex:none}
+.gauge h3{font-size:1.15rem}
+.gauge p{font-size:13px;color:var(--muted);margin-top:2px}
+#ring{transition:stroke-dashoffset .7s ease}
+.m .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:var(--muted);font-weight:600}
+.m b{font:700 1.5rem var(--display);color:var(--fg);letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-align:right}
+.bar2{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar2 i{display:block;height:100%;background:var(--green);width:0;transition:width .7s ease}
+.m .mn{font-size:12px;color:var(--muted);margin-top:5px}
+
+/* generic sections */
+.sec{padding-block:64px;border-top:1px solid var(--line)}
+.sec h2{font-size:clamp(1.8rem,4.4vw,2.9rem);line-height:1.06;font-weight:720;max-width:20ch}
+.sec .intro{max-width:60ch;margin-top:14px;color:var(--muted)}
+.sec .eyebrow{margin-bottom:12px}
+
+/* calculator */
+.calc{display:grid;gap:28px;margin-top:30px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.calc{grid-template-columns:minmax(0,380px) minmax(0,1fr)}}
+.field{margin-bottom:20px}
+.field label{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-bottom:8px}
+.field output{font:500 14px var(--mono);color:var(--green)}
+input[type=range]{width:100%;accent-color:var(--green);height:28px;margin:0}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px 20px;margin-top:6px}
+.res div{border-top:2px solid var(--green2);padding-top:10px}
+.res b{display:block;font:700 1.9rem/1.1 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.res span{font-size:13px;color:var(--muted)}
+.chartbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.chartbox svg{display:block;width:100%;height:auto}
+.chartbox .tx{font:11px var(--mono);fill:var(--muted)}
+.chartbox .strong{fill:var(--fg);font-weight:600}
+.note{font-size:12.5px;color:var(--muted);margin-top:12px}
+
+/* roadmap */
+.tabs{display:flex;gap:8px;overflow-x:auto;margin-top:30px;padding-bottom:4px}
+.tab{flex:none;background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 16px;font:500 13px var(--mono);color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--green);border-color:var(--green);color:var(--oncol)}
+.panel{display:grid;gap:22px;margin-top:18px;grid-template-columns:minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px}
+@media (min-width:820px){.panel{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);padding:30px}}
+.panel h3{font-size:1.7rem;line-height:1.15}
+.panel ul{margin:14px 0 0;padding-left:20px;display:grid;gap:8px}
+.panel li::marker{color:var(--green2)}
+.goal{background:var(--tint);border-radius:10px;padding:20px;align-self:start}
+.goal span{font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.goal b{display:block;font:700 2.4rem/1.05 var(--display);letter-spacing:-.02em;margin-top:8px;color:var(--green)}
+.goal p{font-size:13.5px;color:var(--muted);margin-top:6px}
+
+/* pledge */
+.pledge{display:grid;gap:26px;margin-top:30px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.pledge{grid-template-columns:minmax(0,1fr) 340px}}
+.habits{display:grid;gap:8px}
+.habit{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 16px;cursor:pointer}
+.habit:hover{border-color:var(--green2)}
+.habit input{width:20px;height:20px;accent-color:var(--green);flex:none;margin:0}
+.habit span{flex:1;min-width:0;font-weight:600}
+.habit small{font:500 12px var(--mono);color:var(--muted);white-space:nowrap}
+.habit:has(input:checked){background:var(--tint);border-color:var(--green)}
+.total{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;align-self:start}
+.total b{display:block;font:700 2.8rem/1 var(--display);letter-spacing:-.03em;color:var(--green);font-variant-numeric:tabular-nums}
+.total p{color:var(--muted);font-size:14px;margin-top:8px}
+
+footer{padding-block:34px 44px;border-top:1px solid var(--line)}
+footer p{font-size:13px;color:var(--muted);max-width:70ch}
+
+/* scene */
+.layer{opacity:0;transition:opacity .7s ease}
+.layer.on{opacity:1}
+.inv{opacity:1;transition:opacity .7s ease}
+.inv.off{opacity:0}
+.grow{transform-box:fill-box;transform-origin:50% 100%;transform:scale(.25);transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.layer.on .grow{transform:scale(1)}
+@keyframes ride{from{transform:translateX(-60px)}to{transform:translateX(860px)}}
+@keyframes tram{from{transform:translateX(-230px)}to{transform:translateX(840px)}}
+.rider{animation:ride 16s linear infinite;animation-delay:-6s}
+.tramcar{animation:tram 22s linear infinite;animation-delay:-10s}
+#smog{transition:opacity .8s ease}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .layer,.inv,.grow,#smog,#ring,.bar2 i{transition:none}
+  .rider{animation:none;transform:translateX(420px)}
+  .tramcar{animation:none;transform:translateX(300px)}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" data-al="brandAl">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 27C5 14 13 6 27 5c0 14-8 22-20 22Z" fill="var(--green)"/><path d="M6 26C12 19 17 14 23 10" stroke="var(--bg)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <span data-i="brand"></span>
+    </a>
+    <nav data-al="navAl">
+      <a href="#model" data-i="navModel"></a><a href="#hesab" data-i="navCalc"></a><a href="#yol" data-i="navRoad"></a><a href="#oehdelik" data-i="navPledge"></a>
+    </nav>
+    <button class="ghost" id="themeBtn" type="button" data-i="theme" data-al="themeAl"></button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow" data-i="eyebrow"></p>
+      <h1 data-i="h1"></h1>
+      <p class="lede" data-i="lede"></p>
+      <div class="cta">
+        <button class="btn" id="playBtn" type="button"></button>
+        <a class="link" href="#yol" data-i="roadLink"></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="model-sec" id="model" data-al="modelAl">
+    <div class="wrap model">
+      <div class="stage">
+        <svg id="scene" viewBox="0 0 800 400" role="img"></svg>
+        <div class="chips" id="chips"></div>
+        <div class="stagefoot">
+          <p data-i="foot"></p>
+          <button class="ghost" id="resetBtn" type="button" data-i="reset"></button>
+        </div>
+      </div>
+      <aside class="side" data-al="sideAl">
+        <div class="gauge">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--line)" stroke-width="10"/>
+            <circle id="ring" cx="60" cy="60" r="52" fill="none" stroke="var(--green)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/>
+            <text id="mIdx" x="60" y="66" text-anchor="middle" font-family="var(--display)" font-weight="700" font-size="34" fill="var(--fg)">0</text>
+            <text x="60" y="84" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--muted)">/ 100</text>
+          </svg>
+          <div><h3 data-i="gTitle"></h3><p data-i="gSub"></p></div>
+        </div>
+        <div class="m"><div class="mh"><span data-i="mCo2L"></span><b id="mCo2">0%</b></div><div class="bar2"><i id="bCo2"></i></div><p class="mn" data-i="mCo2N"></p></div>
+        <div class="m"><div class="mh"><span data-i="mTempL"></span><b id="mTemp">0 °C</b></div><div class="bar2"><i id="bTemp"></i></div><p class="mn" data-i="mTempN"></p></div>
+        <div class="m"><div class="mh"><span data-i="mAqiL"></span><b id="mAqi">118</b></div><div class="bar2"><i id="bAqi"></i></div><p class="mn" id="mAqiN"></p></div>
+        <div class="m"><div class="mh"><span data-i="mEnL"></span><b id="mEn">6%</b></div><div class="bar2"><i id="bEn"></i></div><p class="mn" data-i="mEnN"></p></div>
+        <p class="sr" id="live" aria-live="polite"></p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sec" id="hesab">
+    <div class="wrap">
+      <p class="eyebrow" data-i="calcEy"></p>
+      <h2 data-i="calcH"></h2>
+      <p class="intro" data-i="calcIntro"></p>
+      <div class="calc">
+        <div>
+          <div class="field"><label for="inTrees"><span data-i="lTrees"></span> <output id="outTrees">25000</output></label>
+            <input type="range" id="inTrees" min="1000" max="100000" step="1000" value="25000"></div>
+          <div class="field"><label for="inYears"><span data-i="lYears"></span> <output id="outYears">10</output></label>
+            <input type="range" id="inYears" min="1" max="30" step="1" value="10"></div>
+          <div class="res">
+            <div><b id="rTotal">0</b><span data-i="rTotalL"></span></div>
+            <div><b id="rCars">0</b><span data-i="rCarsL"></span></div>
+            <div><b id="rShade">0</b><span data-i="rShadeL"></span></div>
+          </div>
+        </div>
+        <div class="chartbox">
+          <svg id="chart" viewBox="0 0 600 250" role="img" data-al="chartAl"></svg>
+          <p class="note" data-i="calcNote"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="yol">
+    <div class="wrap">
+      <p class="eyebrow" data-i="roadEy"></p>
+      <h2 data-i="roadH"></h2>
+      <p class="intro" data-i="roadIntro"></p>
+      <div class="tabs" role="tablist" id="tabs" data-al="tabsAl"></div>
+      <div class="panel" role="tabpanel" id="panel" tabindex="0"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="oehdelik">
+    <div class="wrap">
+      <p class="eyebrow" data-i="plEy"></p>
+      <h2 data-i="plH"></h2>
+      <p class="intro" data-i="plIntro"></p>
+      <div class="pledge">
+        <div class="habits" id="habits"></div>
+        <div class="total" aria-live="polite">
+          <b id="pKg">0</b>
+          <p id="pTxt"></p>
+          <div class="bar2" style="margin-top:14px"><i id="pBar"></i></div>
+          <p class="note" data-i="plNote"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><p data-i="foot2"></p></div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- translations ---------- */
+var T={
+ en:{
+  brand:'Green City',brandAl:'Green City, back to top',navAl:'Sections',navModel:'Model',navCalc:'Tree maths',navRoad:'Roadmap',navPledge:'Pledge',
+  theme:'Theme',themeAl:'Switch between light and dark theme',langAl:'Switch to Azerbaijani',
+  eyebrow:'City project · sample model',
+  h1:'A city that <em>breathes</em> through the concrete.',
+  lede:'Green City is a ten-year plan that puts every street, roof and waterway to work. Switch on six steps in the model below and watch the city change.',
+  play:'Show 2035',stop:'Stop',again:'Play again',roadLink:'See the roadmap',
+  modelAl:'Interactive city model',sideAl:'Indicators',
+  foot:'Press any button: the city and the figures change at once. Numbers come from a sample model.',reset:'Reset',
+  gTitle:'Green index',gSub:'Combined contribution of the steps you switched on.',
+  mCo2L:'CO₂ emissions',mCo2N:'Reduction against today',
+  mTempL:'Summer temperature',mTempN:'Average drop on central streets',
+  mAqiL:'Air quality index (AQI)',aq1:'Good: the air is clean',aq2:'Moderate',aq3:'Unhealthy for sensitive groups',
+  mEnL:'Clean energy share',mEnN:'Of the city’s electricity demand',
+  sceneAl:function(i){return 'City scene, green index '+i+' of 100'},
+  liveT:function(i,c,a){return 'Green index '+i+' of 100. CO₂ reduction '+c+' percent, air quality index '+a+'.'},
+  calcEy:'The maths',calcH:'One tree is small. A hundred thousand make a city.',
+  calcIntro:'Pick the number of trees and the years. Young trees absorb little and mature trees a lot, and the chart shows it.',
+  lTrees:'Trees planted',lYears:'Years from now',yr1:'year',yrN:'years',
+  rTotalL:'tonnes of CO₂ stored',rCarsL:'cars’ worth of yearly emissions offset',rShadeL:'hectares of shade (mature canopy)',
+  chartAl:'Cumulative CO₂ chart',chartY:'tonnes CO₂',chartX:'year',
+  calcNote:'Rough averages: a mature tree absorbs about 22 kg of CO₂ a year and reaches full strength in 10 years. One passenger car emits about 4.6 tonnes a year. Real figures vary by species and climate.',
+  roadEy:'Roadmap · sample',roadH:'Five stages over ten years',roadIntro:'Pick a stage to see what is built and which target it reaches.',tabsAl:'Stages',goalL:'Stage target',
+  plEy:'Pledge',plH:'The city starts with your everyday choices',plIntro:'Tick the steps you will stand behind. Your choices are saved in this browser.',
+  plNote:'Rough averages. Your own numbers will differ.',kgyr:'kg/yr',kg:'kg',
+  plT1:function(n){return 'Estimated yearly CO₂ saving. That equals about '+n+' mature trees’ yearly uptake.'},plT0:'Estimated yearly CO₂ saving. Start with one step.',
+  foot2:'This page is template content. All figures and dates are illustrative and are not based on real measurements or an official plan.',
+  chips:{trees:['Parks and trees','Shade and cleaner air'],roof:['Green roofs','Insulation and rain capacity'],solar:['Solar panels','Rooftop power generation'],bike:['Bike network','Protected, separated lanes'],tram:['Electric tram','Zero local emissions'],water:['Rain gardens','Catch and filter flood water']},
+  P:[
+   {y:'2026–2027',t:'Preparation and pilot district',pts:['Map the city’s heat and air quality','Hold open hearings with residents','First trees and a bike lane in one pilot district'],g:'5,000',gl:'trees planted',gn:'Pilot results are published for everyone.'},
+   {y:'2028–2029',t:'Mobility and green roofs',pts:['Protected bike network expands','Green roof programme starts on public buildings','Shade rules for pedestrian streets'],g:'60 km',gl:'of bike lanes',gn:'Lines link the centre to the main residential districts.'},
+   {y:'2030–2031',t:'Energy and electric transport',pts:['Rooftop solar programme','First electric tram line','Phased renewal of the bus fleet'],g:'40 MW',gl:'of solar capacity',gn:'Schools, hospitals and public buildings come first.'},
+   {y:'2032–2033',t:'Water and parks',pts:['Rain gardens and water-catching squares','Green corridors join the parks','Restoring river and canal banks'],g:'30%',gl:'green cover',gn:'A park within a five-minute walk of every resident.'},
+   {y:'2034–2035',t:'Review and next steps',pts:['Independent results report','All measurement data shared openly','Drafting the next ten-year plan'],g:'−60%',gl:'CO₂ target',gn:'Against the baseline, measured openly every year.'}
+  ],
+  H:['Commute by bike or public transport','LED lighting and saving energy at home','Choose local seasonal food four times a week','Sort your waste','Join planting or caring for a tree','Shorten your shower by two minutes']
+ },
+ az:{
+  brand:'Yaşıl Şəhər',brandAl:'Yaşıl Şəhər, əsas səhifə',navAl:'Bölmələr',navModel:'Model',navCalc:'Ağac hesabı',navRoad:'Yol xəritəsi',navPledge:'Öhdəlik',
+  theme:'Tema',themeAl:'Açıq və tünd tema arasında keç',langAl:'İngilis dilinə keç',
+  eyebrow:'Şəhər layihəsi · nümunə model',
+  h1:'Beton arasında <em>nəfəs alan</em> şəhər.',
+  lede:'Yaşıl Şəhər hər küçəni, damı və su axınını ağıllı istifadə edən on illik plandır. Aşağıdakı modeldə altı addımı özün aç və şəhərin necə dəyişdiyini izlə.',
+  play:'2035-ci ili göstər',stop:'Dayandır',again:'Yenidən göstər',roadLink:'Yol xəritəsinə bax',
+  modelAl:'İnteraktiv şəhər modeli',sideAl:'Göstəricilər',
+  foot:'Hər düyməni bas: şəhər və göstəricilər dərhal dəyişir. Rəqəmlər nümunə modeldir.',reset:'Sıfırla',
+  gTitle:'Yaşıl indeks',gSub:'Açılan addımların ümumi töhfəsi.',
+  mCo2L:'CO₂ emissiyası',mCo2N:'Bu gün ilə müqayisədə azalma',
+  mTempL:'Yay temperaturu',mTempN:'Mərkəzi küçələrdə orta düşmə',
+  mAqiL:'Hava indeksi (AQI)',aq1:'Yaxşı: hava təmizdir',aq2:'Orta səviyyə',aq3:'Həssaslar üçün zərərli',
+  mEnL:'Təmiz enerji payı',mEnN:'Şəhərin elektrik tələbatından',
+  sceneAl:function(i){return 'Şəhər mənzərəsi, yaşıl indeks '+i+' / 100'},
+  liveT:function(i,c,a){return 'Yaşıl indeks '+i+' / 100. CO₂ azalması '+c+' faiz, hava indeksi '+a+'.'},
+  calcEy:'Hesablama',calcH:'Bir ağac kiçikdir. Yüz min ağac şəhərdir.',
+  calcIntro:'Ağacların sayını və illəri seç. Cavan ağac az, yetkin ağac çox karbon udur, qrafik də bunu göstərir.',
+  lTrees:'Əkilən ağac sayı',lYears:'Neçə il sonra',yr1:'il',yrN:'il',
+  rTotalL:'ton CO₂ yığılıb',rCarsL:'avtomobilin illik emissiyasına bərabər',rShadeL:'hektar kölgə (yetkin tac)',
+  chartAl:'Yığılan CO₂ qrafiki',chartY:'ton CO₂',chartX:'il',
+  calcNote:'Orta hesab: yetkin ağac ildə təxminən 22 kq CO₂ udur, 10 ildə tam gücə çatır. Bir avtomobil ildə təxminən 4,6 ton buraxır. Real rəqəm növə və iqlimə görə dəyişir.',
+  roadEy:'Yol xəritəsi · nümunə',roadH:'On ilin beş mərhələsi',roadIntro:'Hər mərhələni seç, nə edildiyini və hansı hədəfə çatıldığını gör.',tabsAl:'Mərhələlər',goalL:'Mərhələ hədəfi',
+  plEy:'Öhdəlik',plH:'Şəhər sənin gündəlik seçimlərindən başlayır',plIntro:'Üstündə dayana biləcəyin addımları işarələ. Seçimlərin bu brauzerdə yadda qalır.',
+  plNote:'Təxmini orta göstəricilərdir. Sənin vəziyyətinə görə dəyişə bilər.',kgyr:'kq/il',kg:'kq',
+  plT1:function(n){return 'İllik təxmini CO₂ qənaəti. Bu, təxminən '+n+' yetkin ağacın illik uduşuna bərabərdir.'},plT0:'İllik təxmini CO₂ qənaəti. Bir addımla başla.',
+  foot2:'Bu səhifə şablon məzmundur. Bütün rəqəmlər və tarixlər illüstrativdir, real ölçmələrə və ya rəsmi plana əsaslanmır.',
+  chips:{trees:['Parklar və ağaclar','Kölgə və təmiz hava'],roof:['Yaşıl damlar','İzolyasiya və yağış tutumu'],solar:['Günəş panelləri','Dam üstü elektrik istehsalı'],bike:['Velosiped şəbəkəsi','Ayrılmış təhlükəsiz zolaq'],tram:['Elektrik tramvay','Sıfır yerli emissiya'],water:['Yağış bağları','Sel suyunu tutur və süzür']},
+  P:[
+   {y:'2026–2027',t:'Hazırlıq və pilot rayon',pts:['Şəhərin istilik və hava xəritəsi çıxarılır','Sakinlərlə açıq dinləmələr keçirilir','Bir pilot rayonda ilk ağaclar və velosiped zolağı'],g:'5 000',gl:'ağac əkilir',gn:'Pilot rayon nəticələri ictimaiyyətə açıq dərc olunur.'},
+   {y:'2028–2029',t:'Hərəkətlilik və yaşıl damlar',pts:['Ayrılmış velosiped şəbəkəsi genişlənir','Dövlət binalarında yaşıl dam proqramı başlayır','Piyada küçələri üçün kölgə qaydası'],g:'60 km',gl:'velosiped zolağı',gn:'Mərkəzdən əsas yaşayış rayonlarına birləşən xətlər.'},
+   {y:'2030–2031',t:'Enerji və elektrik nəqliyyatı',pts:['Dam üstü günəş paneli proqramı','Elektrik tramvayın ilk xətti','Avtobus parkının mərhələli yenilənməsi'],g:'40 MW',gl:'günəş gücü',gn:'Məktəb, xəstəxana və ictimai binaların damları ilk sıradadır.'},
+   {y:'2032–2033',t:'Su və parklar',pts:['Yağış bağları və su tutan skverlər','Yaşıl dəhlizlərlə parkların birləşməsi','Çay və kanal sahillərinin bərpası'],g:'30%',gl:'yaşıl örtük',gn:'Hər sakinin yaşadığı yerdən beş dəqiqəlik yürüş məsafəsində park.'},
+   {y:'2034–2035',t:'Qiymətləndirmə və davam',pts:['Müstəqil nəticə hesabatı','Bütün ölçmə məlumatlarının açıq paylaşılması','Növbəti on illik planın hazırlanması'],g:'−60%',gl:'CO₂ hədəfi',gn:'Baza ilə müqayisədə, hər il açıq ölçülür.'}
+  ],
+  H:['İşə velosipedlə və ya ictimai nəqliyyatla get','Evdə LED lampa və enerji qənaəti','Mövsümi yerli qidanı həftədə dörd dəfə seç','Tullantını növünə görə ayır','Bir ağac əkməyə və ya baxmağa qoşul','Duş vaxtını iki dəqiqə qısalt']
+ }
+};
+var lang='az';
+function t(k){return T[lang][k]}
+function fmt(n){var sep=lang==='az'?' ':',';return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,sep)}
+function dec(s){return lang==='az'?s.replace('.',','):s}
+
+/* ---------- theme toggle ---------- */
+$('#themeBtn').addEventListener('click',function(){
+  var root=document.documentElement;
+  var cur=root.getAttribute('data-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  root.setAttribute('data-theme',cur==='dark'?'light':'dark');
+});
+
+/* ---------- scene ---------- */
+var B=[[40,70,170],[120,60,120],[190,80,210],[280,70,150],[360,90,190],[460,60,130],[530,80,230],[620,70,160],[700,70,200]];
+var FAR=[[10,50,90],[70,40,120],[150,60,100],[240,50,140],[330,60,110],[420,50,150],[500,60,120],[590,50,130],[660,60,100],[740,50,140]];
+var s='';
+s+='<rect width="800" height="400" fill="var(--sky)"/>';
+s+='<circle cx="660" cy="64" r="32" fill="var(--sun)"/>';
+FAR.forEach(function(f){s+='<rect x="'+f[0]+'" y="'+(300-f[2])+'" width="'+f[1]+'" height="'+f[2]+'" fill="var(--bld2)" opacity=".6"/>';});
+B.forEach(function(b){
+  var x=b[0],w=b[1],h=b[2];
+  s+='<rect x="'+x+'" y="'+(300-h)+'" width="'+w+'" height="'+h+'" fill="var(--bld)"/>';
+  for(var wy=300-h+14;wy<282;wy+=22){for(var wx=x+9;wx<x+w-12;wx+=16){s+='<rect x="'+wx+'" y="'+wy+'" width="8" height="11" rx="1" fill="var(--win)"/>';}}
+});
+s+='<rect id="smog" width="800" height="300" fill="var(--smog)" opacity=".55"/>';
+s+='<rect y="300" width="800" height="100" fill="var(--ground)"/>';
+s+='<g id="g-grass" class="layer"><rect y="358" width="800" height="42" fill="var(--leaf)"/><rect y="300" width="800" height="12" fill="var(--leaf)"/></g>';
+s+='<rect y="312" width="800" height="46" fill="var(--road)"/>';
+s+='<line x1="0" x2="800" y1="335" y2="335" stroke="var(--surface)" stroke-width="1.5" stroke-dasharray="14 12" opacity=".55"/>';
+s+='<g id="g-roof" class="layer">';
+[1,3,5,7].forEach(function(i){var b=B[i],x=b[0],w=b[1],ry=300-b[2];
+  s+='<g class="grow"><rect x="'+x+'" y="'+(ry-9)+'" width="'+w+'" height="9" rx="3" fill="var(--green2)"/>';
+  for(var k=0;k<3;k++){s+='<circle cx="'+(x+w*(k+1)/4)+'" cy="'+(ry-13)+'" r="6" fill="var(--green)"/>';}
+  s+='</g>';});
+s+='</g>';
+s+='<g id="g-solar" class="layer">';
+[0,2,4,6,8].forEach(function(i){var b=B[i],cx=b[0]+b[1]/2,ry=300-b[2];
+  s+='<g transform="translate('+cx+' '+ry+')"><rect x="-26" y="-9" width="52" height="7" rx="1" transform="rotate(-12)" fill="var(--panel)"/><rect x="-26" y="-9" width="52" height="2" transform="rotate(-12)" fill="var(--sun)" opacity=".7"/></g>';});
+s+='</g>';
+s+='<g id="g-trees" class="layer">';
+[30,105,180,270,345,440,520,605,690,770].forEach(function(x,i){
+  s+='<g class="grow" style="transition-delay:'+(i*60)+'ms"><rect x="'+(x-2)+'" y="294" width="4" height="18" fill="var(--panel)" opacity=".8"/><circle cx="'+x+'" cy="284" r="15" fill="var(--green)"/><circle cx="'+(x-7)+'" cy="290" r="9" fill="var(--green2)"/></g>';});
+s+='</g>';
+s+='<g id="g-water" class="layer"><ellipse cx="400" cy="380" rx="96" ry="13" fill="var(--water)"/><path d="M330 380q15-5 30 0t30 0t30 0t30 0t30 0" stroke="var(--surface)" stroke-width="1.5" fill="none" opacity=".6"/>';
+[318,324,480,488,494].forEach(function(x){s+='<path d="M'+x+' 384v-16M'+(x+3)+' 384v-12" stroke="var(--green)" stroke-width="2" stroke-linecap="round"/>';});
+s+='</g>';
+s+='<g id="g-cars" class="inv">';
+[70,300,520].forEach(function(x){
+  s+='<circle cx="'+(x-6)+'" cy="327" r="4" fill="var(--smog)" opacity=".6"/><circle cx="'+(x-15)+'" cy="324" r="5.5" fill="var(--smog)" opacity=".5"/><circle cx="'+(x-27)+'" cy="320" r="7" fill="var(--smog)" opacity=".4"/>';
+  s+='<rect x="'+x+'" y="322" width="46" height="12" rx="3" fill="var(--fg)" opacity=".6"/><rect x="'+(x+9)+'" y="315" width="26" height="9" rx="3" fill="var(--fg)" opacity=".6"/><circle cx="'+(x+10)+'" cy="335" r="4" fill="var(--fg)"/><circle cx="'+(x+36)+'" cy="335" r="4" fill="var(--fg)"/>';});
+s+='</g>';
+s+='<g id="g-tram" class="layer"><g class="tramcar"><g transform="translate(0 312)"><rect width="190" height="27" rx="7" fill="var(--green)"/>';
+for(var tt=0;tt<6;tt++){s+='<rect x="'+(14+tt*29)+'" y="6" width="22" height="10" rx="2" fill="var(--sky)"/>';}
+s+='<rect y="19" width="190" height="3" fill="var(--oncol)" opacity=".35"/><circle cx="32" cy="27" r="4.5" fill="var(--fg)"/><circle cx="158" cy="27" r="4.5" fill="var(--fg)"/><path d="M95 0l14-9" stroke="var(--fg)" stroke-width="2" stroke-linecap="round"/></g></g></g>';
+s+='<g id="g-bike" class="layer"><rect y="346" width="800" height="11" fill="var(--green2)"/><line x1="0" x2="800" y1="351.5" y2="351.5" stroke="var(--surface)" stroke-width="1.5" stroke-dasharray="8 8" opacity=".8"/>';
+s+='<g class="rider"><g transform="translate(0 349)"><circle cx="0" cy="0" r="5" fill="none" stroke="var(--fg)" stroke-width="1.6"/><circle cx="16" cy="0" r="5" fill="none" stroke="var(--fg)" stroke-width="1.6"/><path d="M0 0L8-9L16 0M8-9L4-13M8-9V-18" stroke="var(--fg)" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="8" cy="-22" r="3.5" fill="var(--fg)"/></g></g></g>';
+$('#scene').innerHTML=s;
+
+/* ---------- model state ---------- */
+var L=[
+ {k:'trees',idx:22,co2:8,temp:1.2,aqi:14,en:0},
+ {k:'roof',idx:12,co2:4,temp:0.7,aqi:4,en:6},
+ {k:'solar',idx:22,co2:24,temp:0,aqi:10,en:38},
+ {k:'bike',idx:12,co2:9,temp:0,aqi:12,en:0},
+ {k:'tram',idx:22,co2:22,temp:0.1,aqi:30,en:0},
+ {k:'water',idx:10,co2:2,temp:0.5,aqi:3,en:0}
+];
+var on={};L.forEach(function(l){on[l.k]=false});on.trees=true;on.bike=true;
+function buildChips(){
+  var chips=$('#chips');chips.innerHTML='';
+  L.forEach(function(l){
+    var c=t('chips')[l.k];
+    var b=document.createElement('button');
+    b.type='button';b.className='chip';b.id='chip-'+l.k;b.setAttribute('aria-pressed',on[l.k]?'true':'false');
+    b.innerHTML='<span class="dot"></span><span class="nm">'+c[0]+'</span><span class="pts">+'+l.idx+'</span><small>'+c[1]+'</small>';
+    b.addEventListener('click',function(){stopPlay();on[l.k]=!on[l.k];render();});
+    chips.appendChild(b);
+  });
+}
+var cur={},tok={};
+function setNum(id,to,f){
+  var el=$('#'+id),from=cur[id];cur[id]=to;tok[id]=(tok[id]||0)+1;var my=tok[id];
+  if(from===undefined||reduce){el.textContent=f(to);return;}
+  var t0=performance.now(),d=450;
+  (function step(tm){
+    if(my!==tok[id])return;
+    var p=Math.min(1,(tm-t0)/d),e=1-Math.pow(1-p,3);
+    el.textContent=f(from+(to-from)*e);
+    if(p<1)requestAnimationFrame(step);
+  })(t0);
+}
+function render(){
+  var idx=0,co2=0,temp=0,aqi=0,en=0;
+  L.forEach(function(l){
+    var a=on[l.k];
+    $('#g-'+l.k).classList.toggle('on',a);
+    var c=$('#chip-'+l.k);if(c)c.setAttribute('aria-pressed',a?'true':'false');
+    if(a){idx+=l.idx;co2+=l.co2;temp+=l.temp;aqi+=l.aqi;en+=l.en;}
+  });
+  $('#g-grass').classList.toggle('on',on.trees);
+  $('#g-cars').classList.toggle('off',on.tram);
+  $('#smog').setAttribute('opacity',(0.55*(1-idx/100)).toFixed(2));
+  $('#ring').style.strokeDashoffset=(326.7*(1-idx/100)).toFixed(1);
+  var aq=118-aqi,en2=6+en;
+  setNum('mIdx',idx,function(v){return String(Math.round(v))});
+  setNum('mCo2',co2,function(v){return v<0.5?'0%':'−'+Math.round(v)+'%'});
+  setNum('mTemp',temp,function(v){return v<0.05?'0 °C':'−'+dec(v.toFixed(1))+' °C'});
+  setNum('mAqi',aq,function(v){return String(Math.round(v))});
+  setNum('mEn',en2,function(v){return Math.round(v)+'%'});
+  $('#bCo2').style.width=(co2/69*100)+'%';
+  $('#bTemp').style.width=(temp/2.5*100)+'%';
+  $('#bAqi').style.width=((118-aq)/73*100)+'%';
+  $('#bEn').style.width=en2+'%';
+  $('#mAqiN').textContent=aq<=50?t('aq1'):aq<=100?t('aq2'):t('aq3');
+  $('#live').textContent=t('liveT')(idx,co2,aq);
+  $('#scene').setAttribute('aria-label',t('sceneAl')(idx));
+}
+var playing=null,playDone=false,order=['trees','bike','roof','solar','tram','water'];
+function playLabel(){$('#playBtn').textContent=playing?t('stop'):(playDone?t('again'):t('play'));}
+function stopPlay(){if(playing){clearTimeout(playing.t);playing=null;playDone=false;playLabel();}}
+function play(){
+  if(playing){stopPlay();return;}
+  L.forEach(function(l){on[l.k]=false});render();
+  var i=0;playing={t:0};playDone=false;playLabel();
+  (function next(){
+    if(i>=order.length){playing=null;playDone=true;playLabel();return;}
+    on[order[i++]]=true;render();
+    playing.t=setTimeout(next,reduce?300:1100);
+  })();
+}
+$('#playBtn').addEventListener('click',function(){play();$('#model').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});});
+$('#resetBtn').addEventListener('click',function(){stopPlay();L.forEach(function(l){on[l.k]=false});render();});
+
+/* ---------- tree calculator ---------- */
+function uptake(i){return 22*Math.min(1,i/10)}
+function cum(n,y){var tt=0;for(var i=1;i<=y;i++)tt+=uptake(i);return n*tt/1000}
+function nice(max){var p=Math.pow(10,Math.floor(Math.log10(max/4)));var m=max/4/p;return (m<=1?1:m<=2?2:m<=5?5:10)*p}
+function fmtT(v){return v>=100?fmt(v):v>=1?dec(v.toFixed(1)):dec(v.toFixed(2))}
+function drawChart(n,y){
+  var W=600,H=250,l=54,r=18,tp=28,b=34;
+  var max=cum(n,y),step=nice(max),top=Math.ceil(max/step-1e-9)*step||step;
+  var X=function(i){return l+(W-l-r)*i/y},Y=function(v){return H-b-(H-b-tp)*v/top};
+  var s='';
+  for(var v=0;v<=top+1e-9;v+=step){s+='<line x1="'+l+'" x2="'+(W-r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(l-8)+'" y="'+(Y(v)+4)+'" text-anchor="end" class="tx">'+fmtT(v)+'</text>';}
+  var xs=y<=10?1:y<=20?2:5;
+  for(var i=0;i<=y;i+=xs){s+='<text x="'+X(i)+'" y="'+(H-b+18)+'" text-anchor="middle" class="tx">'+i+'</text>';}
+  var pts=[];for(var j=0;j<=y;j++)pts.push([X(j),Y(cum(n,j))]);
+  var line=pts.map(function(p,k){return (k?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)}).join('');
+  s+='<path d="'+line+'L'+X(y)+' '+Y(0)+'L'+X(0)+' '+Y(0)+'Z" fill="var(--green)" opacity=".16"/>';
+  s+='<path d="'+line+'" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linejoin="round"/>';
+  var e=pts[pts.length-1];
+  s+='<circle cx="'+e[0]+'" cy="'+e[1]+'" r="5" fill="var(--green)" stroke="var(--surface)" stroke-width="2"/>';
+  s+='<text x="'+(e[0]-10)+'" y="'+(e[1]-10)+'" text-anchor="end" class="tx strong">'+fmtT(max)+' t</text>';
+  s+='<text x="'+l+'" y="14" class="tx">'+t('chartY')+'</text><text x="'+(W-r)+'" y="'+(H-4)+'" text-anchor="end" class="tx">'+t('chartX')+'</text>';
+  $('#chart').innerHTML=s;
+}
+function calc(){
+  var n=+$('#inTrees').value,y=+$('#inYears').value;
+  $('#outTrees').textContent=fmt(n);$('#outYears').textContent=y+' '+(y===1?t('yr1'):t('yrN'));
+  var total=cum(n,y),perYear=n*uptake(y)/1000;
+  $('#rTotal').textContent=fmtT(total);
+  $('#rCars').textContent=fmt(perYear*1000/4600);
+  $('#rShade').textContent=fmt(n*25/10000);
+  drawChart(n,y);
+}
+$('#inTrees').addEventListener('input',calc);$('#inYears').addEventListener('input',calc);
+
+/* ---------- roadmap ---------- */
+var tabs=$('#tabs'),panel=$('#panel'),tabIdx=0;
+function showTab(i,focus){
+  tabIdx=i;
+  var btns=tabs.querySelectorAll('.tab');
+  btns.forEach(function(b,k){b.setAttribute('aria-selected',k===i?'true':'false');b.tabIndex=k===i?0:-1;});
+  var p=t('P')[i];
+  panel.setAttribute('aria-labelledby','tab-'+i);
+  panel.innerHTML='<div><p class="eyebrow">'+p.y+'</p><h3>'+p.t+'</h3><ul>'+p.pts.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div><div class="goal"><span>'+t('goalL')+'</span><b>'+p.g+'</b><p>'+p.gl+'. '+p.gn+'</p></div>';
+  if(focus)btns[i].focus();
+}
+function buildTabs(){
+  tabs.innerHTML='';var P=t('P');
+  P.forEach(function(p,i){
+    var b=document.createElement('button');
+    b.type='button';b.className='tab';b.id='tab-'+i;b.setAttribute('role','tab');b.textContent=p.y;
+    b.addEventListener('click',function(){showTab(i,false)});
+    b.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'){e.preventDefault();showTab((i+1)%P.length,true);}
+      if(e.key==='ArrowLeft'){e.preventDefault();showTab((i+P.length-1)%P.length,true);}
+    });
+    tabs.appendChild(b);
+  });
+  showTab(tabIdx,false);
+}
+
+/* ---------- pledge ---------- */
+var KGS=[700,150,250,120,22,80],IDS=['h1','h2','h3','h4','h5','h6'];
+var KEY='yasil-seher-oehdelik',saved=[];
+try{saved=JSON.parse(localStorage.getItem(KEY)||'[]')||[]}catch(e){saved=[]}
+var maxKg=KGS.reduce(function(a,b){return a+b},0);
+function buildHabits(){
+  var hb=$('#habits');hb.innerHTML='';
+  t('H').forEach(function(txt,i){
+    var lab=document.createElement('label');lab.className='habit';lab.setAttribute('for',IDS[i]);
+    lab.innerHTML='<input type="checkbox" id="'+IDS[i]+'"'+(saved.indexOf(IDS[i])>-1?' checked':'')+'><span>'+txt+'</span><small>'+KGS[i]+' '+t('kgyr')+'</small>';
+    lab.querySelector('input').addEventListener('change',pledge);
+    hb.appendChild(lab);
+  });
+}
+function pledge(){
+  var ids=[],kg=0;
+  IDS.forEach(function(id,i){if($('#'+id).checked){ids.push(id);kg+=KGS[i];}});
+  saved=ids;
+  try{localStorage.setItem(KEY,JSON.stringify(ids))}catch(e){}
+  $('#pKg').textContent=fmt(kg)+' '+t('kg');
+  $('#pBar').style.width=(kg/maxKg*100)+'%';
+  $('#pTxt').textContent=kg?t('plT1')(fmt(kg/22)):t('plT0');
+}
+
+/* ---------- language ---------- */
+function applyStatic(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll('[data-i]').forEach(function(el){el.innerHTML=t(el.getAttribute('data-i'))});
+  document.querySelectorAll('[data-al]').forEach(function(el){el.setAttribute('aria-label',t(el.getAttribute('data-al')))});
+}
+function setLang(l){
+  lang=l;
+  applyStatic();buildChips();render();calc();buildTabs();buildHabits();pledge();playLabel();
+}
+setLang(lang);
+})();
+</script>
+
+</body></html>
